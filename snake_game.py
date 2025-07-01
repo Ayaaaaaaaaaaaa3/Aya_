@@ -1,6 +1,5 @@
 import pygame
 import random
-import sys
 import time
 import math
 
@@ -20,10 +19,6 @@ GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
 # 颜色定义
 WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
 
 # 方向定义
 UP = (0, -1)
@@ -66,7 +61,7 @@ class Snake:
         self.direction = RIGHT
         self.last_direction = self.direction
         self.score = 0
-        self.color = GREEN
+        self.color = (0, 255, 0)
         
     def get_head_position(self):
         """获取蛇头位置"""
@@ -343,13 +338,12 @@ def main():
             overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 160))
             screen.blit(overlay, (0, 0))
-            draw_text_with_bg(screen, "游戏结束", big_font, (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80), RED, (0, 0, 0), 16, 220)
+            draw_text_with_bg(screen, "游戏结束", big_font, (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80), (255, 0, 0), (0, 0, 0), 16, 220)
             draw_text_with_bg(screen, f"最终分数: {snake.score}", font, (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), WHITE, (0, 0, 0), 12, 180)
             draw_text_with_bg(screen, "按R键重玩，ESC退出", font, (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60), WHITE, (0, 0, 0), 12, 180)
         pygame.display.flip()
     
     pygame.quit()
-    sys.exit()
 
 if __name__ == "__main__":
     main()    
