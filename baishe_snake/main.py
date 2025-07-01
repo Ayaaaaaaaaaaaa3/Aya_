@@ -66,7 +66,7 @@ paused = False
 
 # 加载主界面背景图片（如有）
 try:
-    bg_img = pygame.image.load(r"E:/baishe_snake/start.jpg")
+    bg_img = pygame.image.load(r"E:/github/AYA_/baishe_snake/start.jpg")
     bg_img = pygame.transform.scale(bg_img, (width*cell_size, height*cell_size))
 except:
     bg_img = None
@@ -85,6 +85,17 @@ amulet_pos = None
 amulet_count = 0
 boss_weak = False
 boss_circle_goal = 3
+
+# 加载Boss图片（如有）
+boss_img_path = r"E:/github/AYA_/baishe_snake/boss.png"
+boss_img = None
+try:
+    boss_img = pygame.image.load(boss_img_path)
+    boss_img = pygame.transform.scale(boss_img, (cell_size, cell_size))
+    print(f"Boss图片加载成功: {boss_img_path}")
+except Exception as e:
+    boss_img = None
+    print(f"Boss图片加载失败: {boss_img_path}, 错误: {e}")
 
 while True:
     for event in pygame.event.get():
@@ -267,7 +278,7 @@ while True:
                     msg = "恭喜通关！"
                     continue
         if levels[current_level]["special"] == "boss_final" and boss is None:
-            boss = Boss(width, height, cell_size)
+            boss = Boss(width // 2, height // 2, cell_size, image_path=boss_img_path if boss_img else None)
             boss.set_mode("final")
         if boss and boss.alive:
             boss.move(width, height, game_map.obstacles, target_pos=snake.body[0])
@@ -292,7 +303,7 @@ while True:
         continue
 
     # 渲染
-    screen.fill((0, 0, 0))
+    screen.fill((200, 255, 240))  # 浅薄荷绿
     screen.blit(font.render(f"第{level}关 {levels[current_level]['name']}  {fruit_eaten}/{levels[current_level]['target']} {levels[current_level]['fruit_name']}", True, (255,255,255)), (10, 10))
     if special == "invincible" and skill_tree.is_invincible():
         screen.blit(font.render(f"无敌中 剩余:{skill_tree.invincible_timer}", True, (255,255,0)), (10, 130))
@@ -352,8 +363,6 @@ while True:
     pygame.draw.rect(screen, color, (food.position[0]*cell_size, food.position[1]*cell_size, cell_size, cell_size))
     for x, y in game_map.obstacles:
         pygame.draw.rect(screen, (128, 128, 128), (x*cell_size, y*cell_size, cell_size, cell_size))
-    if boss and boss.alive:
-        boss.render(screen)
     screen.blit(font.render(f"得分：{score}  最高分：{max_score}", True, (255,255,255)), (10, 40))
     screen.blit(font.render(f"当前速度：{speed_offset}", True, (0,255,255)), (10, 90))
     if game_state == "playing":
@@ -367,5 +376,9 @@ while True:
             clock.tick(snake.speed + score // 5 + speed_offset + 10)
         else:
             clock.tick(snake.speed + score // 5 + speed_offset)
+
+    # BOSS渲染放到最后，确保不会被覆盖
+    if boss and boss.alive:
+        boss.draw(screen)
 
 pygame.quit()
