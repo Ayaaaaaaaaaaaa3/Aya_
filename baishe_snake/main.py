@@ -23,7 +23,7 @@ levels = [
     {"name": "断桥相会", "fruit_name": "莲花果", "target": 1, "obstacles": "bridge", "special": None},
     {"name": "金山寺门前", "fruit_name": "灵芝果", "target": 1, "obstacles": "monk", "special": "moving_obstacle"},
     {"name": "雷峰塔下", "fruit_name": "仙草果", "target": 1, "obstacles": "narrow", "special": "fast"},
-    {"name": "水漫金山", "fruit_name": "水灵果", "target": 2, "obstacles": None, "special": "water"},
+    {"name": "水漫金山", "fruit_name": "水灵果", "target": 1, "obstacles": None, "special": "water"},
     {"name": "白蛇斗法", "fruit_name": "法力果", "target": 1, "obstacles": None, "special": "invincible"},
     {"name": "小青救主", "fruit_name": "青藤果", "target": 1, "obstacles": None, "special": "rescue"},
     {"name": "迷雾幻境", "fruit_name": "幻境果", "target": 1, "obstacles": None, "special": "fog"},
@@ -66,7 +66,7 @@ paused = False
 
 # 加载主界面背景图片（如有）
 try:
-    bg_img = pygame.image.load(r"E:/github/AYA_/baishe_snake/start.jpg")
+    bg_img = pygame.image.load(r"E:/baishe_snake/start.jpg")
     bg_img = pygame.transform.scale(bg_img, (width*cell_size, height*cell_size))
 except:
     bg_img = None
@@ -87,7 +87,7 @@ boss_weak = False
 boss_circle_goal = 3
 
 # 加载Boss图片（如有）
-boss_img_path = r"E:/github/AYA_/baishe_snake/boss.png"
+boss_img_path = r"E:/boss.png"
 boss_img = None
 try:
     boss_img = pygame.image.load(boss_img_path)
@@ -335,40 +335,18 @@ while True:
     if special == "boss_final" and boss and boss_weak:
         screen.blit(font.render(f"BOSS虚弱，绕圈进度：{boss.circle_count}/{boss_circle_goal}", True, (255,0,0)), (10, 190))
     # 画蛇
-    head_x, head_y = snake.body[0]
-    center = (head_x*cell_size + cell_size//2, head_y*cell_size + cell_size//2)
-    pygame.draw.circle(screen, (255, 255, 255), center, cell_size//2)
-    eye_radius = cell_size // 7
-    eye_offset_x = cell_size // 5
-    eye_offset_y = cell_size // 5
-    dx, dy = snake.direction
-    if dx == 1:
-        eye1 = (center[0] + eye_offset_x, center[1] - eye_offset_y)
-        eye2 = (center[0] + eye_offset_x, center[1] + eye_offset_y)
-    elif dx == -1:
-        eye1 = (center[0] - eye_offset_x, center[1] - eye_offset_y)
-        eye2 = (center[0] - eye_offset_x, center[1] + eye_offset_y)
-    elif dy == 1:
-        eye1 = (center[0] - eye_offset_x, center[1] + eye_offset_y)
-        eye2 = (center[0] + eye_offset_x, center[1] + eye_offset_y)
-    else:
-        eye1 = (center[0] - eye_offset_x, center[1] - eye_offset_y)
-        eye2 = (center[0] + eye_offset_x, center[1] - eye_offset_y)
-    pygame.draw.circle(screen, (0,0,0), eye1, eye_radius)
-    pygame.draw.circle(screen, (0,0,0), eye2, eye_radius)
-    for x, y in snake.body[1:]:
-        center = (x*cell_size + cell_size//2, y*cell_size + cell_size//2)
-        pygame.draw.circle(screen, (255, 255, 255), center, cell_size//2)
+    snake.render(screen, cell_size)
+    # 画食物
     color = (255, 0, 0) if food.type == "normal" else (255, 255, 0)
     pygame.draw.rect(screen, color, (food.position[0]*cell_size, food.position[1]*cell_size, cell_size, cell_size))
     for x, y in game_map.obstacles:
         pygame.draw.rect(screen, (128, 128, 128), (x*cell_size, y*cell_size, cell_size, cell_size))
     screen.blit(font.render(f"得分：{score}  最高分：{max_score}", True, (255,255,255)), (10, 40))
     screen.blit(font.render(f"当前速度：{speed_offset}", True, (0,255,255)), (10, 90))
+    pygame.display.flip()
     if game_state == "playing":
         seconds = (pygame.time.get_ticks() - start_ticks) // 1000
         screen.blit(font.render(f"剩余时间：{max(0, time_limit - seconds)}秒", True, (255,255,0)), (10, 60))
-    pygame.display.flip()
     if game_state == "playing" and not paused:
         if special == "water" and in_water:
             clock.tick(8)
@@ -380,5 +358,6 @@ while True:
     # BOSS渲染放到最后，确保不会被覆盖
     if boss and boss.alive:
         boss.draw(screen)
+
 
 pygame.quit()
