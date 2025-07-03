@@ -1,9 +1,13 @@
 from tkinter import Tk, Frame, Button, Label
 from config import UI_WIDTH, UI_HEIGHT
 
+LEVEL_COUNT = 10  # 与基础机制.py保持一致
+
 class LevelSelect:
-    def __init__(self, master):
+    def __init__(self, master, on_level_selected=None, on_back=None):
         self.master = master
+        self.on_level_selected = on_level_selected
+        self.on_back = on_back
         self.master.title("选择关卡")
         self.master.geometry(f"{UI_WIDTH}x{UI_HEIGHT}")
         self.master.resizable(False, False)
@@ -27,7 +31,7 @@ class LevelSelect:
         }
 
         self.level_buttons = []
-        for i in range(1, 6):  # 假设有5个关卡
+        for i in range(1, LEVEL_COUNT + 1):  # 动态生成关卡按钮
             button = Button(self.frame, text=f"关卡 {i}", 
                            command=lambda level=i: self.select_level(level), 
                            **button_style)
@@ -40,11 +44,13 @@ class LevelSelect:
 
     def select_level(self, level):
         print(f"选择了关卡 {level}")
-        # 在这里可以添加进入游戏逻辑
+        if self.on_level_selected:
+            self.on_level_selected(level)
 
     def back_to_menu(self):
         print("返回到开始菜单")
-        # 在这里可以添加返回菜单的逻辑
+        if self.on_back:
+            self.on_back()
 
 if __name__ == "__main__":
     root = Tk()

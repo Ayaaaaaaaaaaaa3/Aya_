@@ -6,6 +6,7 @@ import pygame
 import sys
 import os
 from tkinter import Tk, messagebox
+from PIL import Image, ImageTk
 
 # 导入游戏组件
 from config import *
@@ -18,6 +19,7 @@ from UI.start_menu import StartMenu
 from UI.level_select import LevelSelect
 from UI.skin_select import SkinSelect
 from UI.record import Record
+from UI.end_menu import EndMenu
 
 class Game:
     def __init__(self):
@@ -52,6 +54,9 @@ class Game:
         self.screen = None
         self.clock = None
         self.font = None  # 中文字体
+        
+        # 新增状态
+        self.state = "start_menu"  # 新增状态：start_menu, playing, level_select, skin_select, record
         
         # 初始化关卡
         self.init_level()
@@ -97,112 +102,120 @@ class Game:
                     # 最后使用pygame默认字体
                     return pygame.font.Font(None, size)
     
-    def show_start_menu(self):
-        """显示开始菜单"""
-        self.tk_root = Tk()
-        self.start_menu = StartMenu(self.tk_root)
-        # 绑定按钮事件
-        self.start_menu.skin_button.config(command=self.show_skin_select)
-        self.start_menu.level_button.config(command=self.show_level_select)
-        self.start_menu.start_button.config(command=self.start_game)
-        self.start_menu.record_button.config(command=self.show_records)
-        self.tk_root.mainloop()  # 阻塞，直到窗口销毁
-    
-    def show_skin_select(self):
-        """显示皮肤选择界面"""
-        if self.tk_root is not None:
-            # 添加淡出效果
-            self.tk_root.attributes('-alpha', 0.8)
-            self.tk_root.after(100, lambda: self.tk_root.attributes('-alpha', 0.6) if self.tk_root else None)
-            self.tk_root.after(200, lambda: self.tk_root.destroy() if self.tk_root else None)
-            self.tk_root = None
-        self.tk_root = Tk()
-        skin_select = SkinSelect(self.tk_root)
-        def confirm_and_back():
-            self.selected_skin = skin_select.selected_skin.get()
-            if self.tk_root is not None:
-                self.tk_root.destroy()
-                self.tk_root = None
-            self.show_start_menu()
-        def back_and_menu():
-            if self.tk_root is not None:
-                self.tk_root.destroy()
-                self.tk_root = None
-            self.show_start_menu()
-        skin_select.confirm_button.config(command=confirm_and_back)
-        skin_select.back_button.config(command=back_and_menu)
-        self.tk_root.mainloop()
-    
-    def show_level_select(self):
-        """显示关卡选择界面"""
-        if self.tk_root is not None:
-            # 添加淡出效果
-            self.tk_root.attributes('-alpha', 0.8)
-            self.tk_root.after(100, lambda: self.tk_root.attributes('-alpha', 0.6) if self.tk_root else None)
-            self.tk_root.after(200, lambda: self.tk_root.destroy() if self.tk_root else None)
-            self.tk_root = None
-        self.tk_root = Tk()
-        level_select = LevelSelect(self.tk_root)
-        def select_level_and_start(level):
-            self.current_level = level
-            if self.tk_root is not None:
-                self.tk_root.destroy()
-                self.tk_root = None
-            self.start_game()
-        def back_to_menu():
-            if self.tk_root is not None:
-                self.tk_root.destroy()
-                self.tk_root = None
-            self.show_start_menu()
-        for i, button in enumerate(level_select.level_buttons):
-            button.config(command=lambda level=i+1: select_level_and_start(level))
-        level_select.back_button.config(command=back_to_menu)
-        self.tk_root.mainloop()
-    
-    def show_records(self):
-        """显示战绩记录"""
-        records_text = self.record_system.display_records()
-        messagebox.showinfo("战绩记录", records_text)
-    
-    def start_game(self):
-        """开始游戏"""
-        if self.tk_root is not None:
-            self.tk_root.withdraw()  # 隐藏而不是销毁
+    def show_pygame_menu_loop(self):
+        import pygame
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption("白蛇贪吃劫")
-        # 置顶Pygame窗口
-        try:
-            import ctypes
-            hwnd = pygame.display.get_wm_info()['window']
-            ctypes.windll.user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0001 | 0x0002)
-        except Exception as e:
-            print("置顶失败：", e)
         self.font = self.load_chinese_font(24)
         self.clock = pygame.time.Clock()
-        self.init_level()
         self.running = True
-        self.game_loop()  # 只运行Pygame主循环
-    
+        while self.running:
+            self.handle_events()
+            self.render()
+            if self.state == "playing":
+                self.update_game()
+            if self.clock:
+                self.clock.tick(FPS)
+
+    def render(self):
+        if self.state == "start_menu":
+            self.render_start_menu()
+        elif self.state == "playing":
+            self.render_game()
+        # 可扩展其它状态
+
+    def render_start_menu(self):
+        import pygame
+        if self.screen is None or self.font is None:
+            return
+        # 背景
+        if not hasattr(self, '_start_bg_surface'):
+            import os
+            if os.path.exists("assets/start_bg.jpg"):
+                self._start_bg_surface = pygame.image.load("assets/start_bg.jpg").convert()
+                self._start_bg_surface = pygame.transform.scale(self._start_bg_surface, (WINDOW_WIDTH, WINDOW_HEIGHT))
+            else:
+                self._start_bg_surface = None
+        if self._start_bg_surface:
+            self.screen.blit(self._start_bg_surface, (0, 0))
+        else:
+            self.screen.fill((34, 85, 96))
+        # 按钮参数
+        btn_w, btn_h = 200, 50
+        btn_color = (34, 85, 96)
+        btn_hover = (110, 193, 228)
+        font_color = (255, 255, 255)
+        font = self.font
+        # 右下角布局
+        margin = 30
+        x = WINDOW_WIDTH - btn_w - margin
+        y0 = WINDOW_HEIGHT - (btn_h + 15) * 4 - margin
+        btns = ["开始游戏", "选择关卡", "选择皮肤", "战绩记录"]
+        self.menu_btn_rects = []
+        mx, my = pygame.mouse.get_pos()
+        for i, text in enumerate(btns):
+            y = y0 + i * (btn_h + 15)
+            rect = pygame.Rect(x, y, btn_w, btn_h)
+            color = btn_hover if rect.collidepoint(mx, my) else btn_color
+            pygame.draw.rect(self.screen, color, rect, border_radius=12)
+            btn_text = font.render(text, True, font_color)
+            text_rect = btn_text.get_rect(center=rect.center)
+            self.screen.blit(btn_text, text_rect)
+            self.menu_btn_rects.append(rect)
+        pygame.display.flip()
+
     def handle_events(self):
-        """处理游戏事件"""
+        import pygame
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self.running = False
-                elif event.key == pygame.K_p:
-                    self.paused = not self.paused
-                elif not self.paused and not self.game_over:
-                    if event.key == pygame.K_UP:
-                        self.snake.change_direction((0, -1))
-                    elif event.key == pygame.K_DOWN:
-                        self.snake.change_direction((0, 1))
-                    elif event.key == pygame.K_LEFT:
-                        self.snake.change_direction((-1, 0))
-                    elif event.key == pygame.K_RIGHT:
-                        self.snake.change_direction((1, 0))
+            elif self.state == "start_menu":
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mx, my = event.pos
+                    if hasattr(self, 'menu_btn_rects'):
+                        if self.menu_btn_rects[0].collidepoint(mx, my):
+                            self.state = "playing"
+                            self.init_level()
+                        elif self.menu_btn_rects[1].collidepoint(mx, my):
+                            # 选择关卡逻辑
+                            pass
+                        elif self.menu_btn_rects[2].collidepoint(mx, my):
+                            # 选择皮肤逻辑
+                            pass
+                        elif self.menu_btn_rects[3].collidepoint(mx, my):
+                            # 战绩记录逻辑
+                            pass
+            elif self.state == "playing":
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                    elif event.key == pygame.K_p:
+                        self.paused = not self.paused
+                    elif not self.paused and not self.game_over:
+                        if event.key == pygame.K_UP:
+                            self.snake.change_direction((0, -1))
+                        elif event.key == pygame.K_DOWN:
+                            self.snake.change_direction((0, 1))
+                        elif event.key == pygame.K_LEFT:
+                            self.snake.change_direction((-1, 0))
+                        elif event.key == pygame.K_RIGHT:
+                            self.snake.change_direction((1, 0))
+                elif event.type == pygame.MOUSEBUTTONDOWN and self.game_over:
+                    mx, my = event.pos
+                    if hasattr(self, 'button_restart_rect') and self.button_restart_rect.collidepoint(mx, my):
+                        self.running = False
+                        self.restart_game()
+                        self.running = True
+                        self.game_loop()
+                    elif hasattr(self, 'button_quit_rect') and self.button_quit_rect.collidepoint(mx, my):
+                        self.running = False
+                        import pygame
+                        pygame.quit()
+                        import sys
+                        sys.exit()
+            elif event.type == pygame.QUIT:
+                self.running = False
     
     def update_game(self):
         """更新游戏逻辑"""
@@ -294,7 +307,7 @@ class Game:
         self.current_level = 1
         self.init_level()
     
-    def render(self):
+    def render_game(self):
         """渲染游戏画面"""
         if self.screen is None:
             return
@@ -318,47 +331,6 @@ class Game:
         self.render_ui()
         
         pygame.display.flip()
-    
-    def show_game_over_dialog(self):
-        import tkinter as tk
-        from tkinter import ttk
-        
-        dialog = tk.Toplevel()
-        dialog.title("游戏结束")
-        dialog.geometry("300x180")
-        dialog.resizable(False, False)
-        dialog.grab_set()  # 模态窗口
-        
-        # 居中显示
-        dialog.update_idletasks()
-        x = (dialog.winfo_screenwidth() // 2) - 150
-        y = (dialog.winfo_screenheight() // 2) - 90
-        dialog.geometry(f"300x180+{x}+{y}")
-        
-        label = ttk.Label(dialog, text="游戏结束", font=("微软雅黑", 18))
-        label.pack(pady=30)
-        
-        def restart():
-            dialog.destroy()
-            self.running = False  # 先安全退出主循环
-            self.restart_game()
-            self.running = True
-            self.game_loop()
-            
-        def quit_game():
-            dialog.destroy()
-            self.running = False  # 先安全退出主循环
-            pygame.quit()
-            sys.exit()
-        
-        btn_frame = ttk.Frame(dialog)
-        btn_frame.pack(pady=10)
-        restart_btn = ttk.Button(btn_frame, text="重新开始", command=restart, width=12)
-        restart_btn.grid(row=0, column=0, padx=10)
-        quit_btn = ttk.Button(btn_frame, text="结束游戏", command=quit_game, width=12)
-        quit_btn.grid(row=0, column=1, padx=10)
-        
-        dialog.wait_window()
     
     def render_ui(self):
         """渲染用户界面"""
@@ -389,24 +361,58 @@ class Game:
         
         # 游戏结束
         if self.game_over:
+            # 加载并显示结束背景图片
+            if not hasattr(self, '_end_bg_surface'):
+                import pygame
+                import os
+                if os.path.exists("assets/end_bg.jpg"):
+                    self._end_bg_surface = pygame.image.load("assets/end_bg.jpg").convert()
+                    self._end_bg_surface = pygame.transform.scale(self._end_bg_surface, (WINDOW_WIDTH, WINDOW_HEIGHT))
+                else:
+                    self._end_bg_surface = None
+            if self._end_bg_surface:
+                self.screen.blit(self._end_bg_surface, (0, 0))
             game_over_text = self.font.render("游戏结束", True, RED)
-            text_rect = game_over_text.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2))
+            text_rect = game_over_text.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 60))
             self.screen.blit(game_over_text, text_rect)
-            # 弹出交互窗口（只弹一次）
-            if not hasattr(self, '_game_over_dialog_shown'):
-                self._game_over_dialog_shown = True
-                pygame.display.update()
-                self.show_game_over_dialog()
+            # 画按钮
+            self.draw_end_buttons()
         
         # 胜利
         if self.win:
             win_text = self.font.render("恭喜通关！", True, GREEN)
             text_rect = win_text.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2))
             self.screen.blit(win_text, text_rect)
-        
-        # 如果不是game_over，重置弹窗标志
-        if not self.game_over and hasattr(self, '_game_over_dialog_shown'):
-            del self._game_over_dialog_shown
+    
+    def draw_end_buttons(self):
+        if self.screen is None or self.font is None:
+            return
+        # 按钮参数
+        btn_w, btn_h = 200, 60
+        btn_color = (34, 85, 96)
+        btn_hover = (110, 193, 228)
+        font_color = (255, 255, 255)
+        font = self.font
+        center_x = WINDOW_WIDTH // 2
+        y1 = WINDOW_HEIGHT // 2 + 10
+        y2 = y1 + btn_h + 20
+        # 获取鼠标位置
+        import pygame
+        mx, my = pygame.mouse.get_pos()
+        # 重新开始按钮
+        self.button_restart_rect = pygame.Rect(center_x - btn_w//2, y1, btn_w, btn_h)
+        restart_color = btn_hover if self.button_restart_rect.collidepoint(mx, my) else btn_color
+        pygame.draw.rect(self.screen, restart_color, self.button_restart_rect, border_radius=12)
+        restart_text = font.render("重新开始", True, font_color)
+        text_rect = restart_text.get_rect(center=self.button_restart_rect.center)
+        self.screen.blit(restart_text, text_rect)
+        # 结束游戏按钮
+        self.button_quit_rect = pygame.Rect(center_x - btn_w//2, y2, btn_w, btn_h)
+        quit_color = btn_hover if self.button_quit_rect.collidepoint(mx, my) else btn_color
+        pygame.draw.rect(self.screen, quit_color, self.button_quit_rect, border_radius=12)
+        quit_text = font.render("结束游戏", True, font_color)
+        text_rect = quit_text.get_rect(center=self.button_quit_rect.center)
+        self.screen.blit(quit_text, text_rect)
     
     def game_loop(self):
         """游戏主循环"""
@@ -419,14 +425,14 @@ class Game:
         # 游戏结束，保存记录
         if self.score > 0:
             self.record_system.add_score(self.score)
+        import pygame
         pygame.quit()
-        if self.tk_root is not None:
-            self.tk_root.deiconify()  # 恢复Tk窗口
-        self.show_start_menu()
+        import sys
+        sys.exit()
     
     def run(self):
-        """运行游戏"""
-        self.show_start_menu()
+        self.state = "start_menu"
+        self.show_pygame_menu_loop()
 
 def main():
     """主函数"""
