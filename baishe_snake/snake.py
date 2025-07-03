@@ -24,6 +24,7 @@ class Snake:
         self.grow = True
 
     def check_collision(self, width, height, obstacles):
+        #检查碰撞
         head = self.body[0]
         # 撞墙
         if head[0] < 0 or head[0] >= width or head[1] < 0 or head[1] >= height:

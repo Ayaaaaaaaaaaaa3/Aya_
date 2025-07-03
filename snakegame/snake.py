@@ -6,6 +6,7 @@ class Snake:
         self.direction = (1, 0)
         self.grow = False
         self.speed = 1 # 初始速度
+        self.special_effects = {}  # 特殊效果字典
 
     def move(self):
         head = (self.body[0][0] + self.direction[0], self.body[0][1] + self.direction[1])
@@ -63,3 +64,9 @@ class Snake:
         for x, y in self.body[1:]:
             center = (x * cell_size + cell_size // 2, y * cell_size + cell_size // 2)
             pygame.draw.circle(surface, (255, 255, 255), center, cell_size // 2)
+
+    def reset(self):
+        self.body = [(10, 10), (9, 10), (8, 10)]
+        self.direction = (1, 0)
+        self.grow = False
+        self.speed = 1
