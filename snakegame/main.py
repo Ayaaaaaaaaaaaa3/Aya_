@@ -121,6 +121,12 @@ class Game:
     def render(self):
         if self.state == "start_menu":
             self.render_start_menu()
+        elif self.state == "level_select":
+            self.render_level_select()
+        elif self.state == "skin_select":
+            self.render_skin_select()
+        elif self.state == "record":
+            self.render_record()
         elif self.state == "playing":
             self.render_game()
         # 可扩展其它状态
@@ -165,6 +171,115 @@ class Game:
             self.menu_btn_rects.append(rect)
         pygame.display.flip()
 
+    def render_level_select(self):
+        import pygame
+        if self.screen is None or self.font is None:
+            return
+        if hasattr(self, '_start_bg_surface') and self._start_bg_surface:
+            self.screen.blit(self._start_bg_surface, (0, 0))
+        else:
+            self.screen.fill((34, 85, 96))
+        title = self.font.render("请选择关卡", True, (255, 255, 255))
+        self.screen.blit(title, (WINDOW_WIDTH - 300, 40))
+        btn_w, btn_h = 120, 38
+        btn_color = (34, 85, 96)
+        btn_hover = (110, 193, 228)
+        font_color = (255, 255, 255)
+        margin = 30
+        x = WINDOW_WIDTH - btn_w - margin
+        y0 = 80
+        gap = 6
+        self.level_btn_rects = []
+        mx, my = pygame.mouse.get_pos()
+        for i in range(10):
+            y = y0 + i * (btn_h + gap)
+            rect = pygame.Rect(x, y, btn_w, btn_h)
+            color = btn_hover if rect.collidepoint(mx, my) else btn_color
+            pygame.draw.rect(self.screen, color, rect, border_radius=8)
+            btn_text = self.font.render(f"关卡 {i+1}", True, font_color)
+            text_rect = btn_text.get_rect(center=rect.center)
+            self.screen.blit(btn_text, text_rect)
+            self.level_btn_rects.append(rect)
+        # 返回按钮
+        back_rect = pygame.Rect(x, y0 + 10 * (btn_h + gap) + 10, btn_w, btn_h)
+        color = btn_hover if back_rect.collidepoint(mx, my) else btn_color
+        pygame.draw.rect(self.screen, color, back_rect, border_radius=8)
+        back_text = self.font.render("返回", True, font_color)
+        text_rect = back_text.get_rect(center=back_rect.center)
+        self.screen.blit(back_text, text_rect)
+        self.level_back_rect = back_rect
+        pygame.display.flip()
+
+    def render_skin_select(self):
+        import pygame
+        if self.screen is None or self.font is None:
+            return
+        if hasattr(self, '_start_bg_surface') and self._start_bg_surface:
+            self.screen.blit(self._start_bg_surface, (0, 0))
+        else:
+            self.screen.fill((34, 85, 96))
+        title = self.font.render("请选择皮肤", True, (255, 255, 255))
+        self.screen.blit(title, (WINDOW_WIDTH - 300, 80))
+        skins = ["皮肤1", "皮肤2", "皮肤3", "皮肤4"]
+        btn_w, btn_h = 120, 40
+        btn_color = (34, 85, 96)
+        btn_hover = (110, 193, 228)
+        font_color = (255, 255, 255)
+        margin = 30
+        x = WINDOW_WIDTH - btn_w - margin
+        y0 = 150
+        self.skin_btn_rects = []
+        mx, my = pygame.mouse.get_pos()
+        for i, skin in enumerate(skins):
+            y = y0 + i * (btn_h + 10)
+            rect = pygame.Rect(x, y, btn_w, btn_h)
+            color = btn_hover if rect.collidepoint(mx, my) else btn_color
+            pygame.draw.rect(self.screen, color, rect, border_radius=8)
+            btn_text = self.font.render(skin, True, font_color)
+            text_rect = btn_text.get_rect(center=rect.center)
+            self.screen.blit(btn_text, text_rect)
+            self.skin_btn_rects.append(rect)
+        # 返回按钮
+        back_rect = pygame.Rect(x, y0 + 5 * (btn_h + 10), btn_w, btn_h)
+        color = btn_hover if back_rect.collidepoint(mx, my) else btn_color
+        pygame.draw.rect(self.screen, color, back_rect, border_radius=8)
+        back_text = self.font.render("返回", True, font_color)
+        text_rect = back_text.get_rect(center=back_rect.center)
+        self.screen.blit(back_text, text_rect)
+        self.skin_back_rect = back_rect
+        pygame.display.flip()
+
+    def render_record(self):
+        import pygame
+        if self.screen is None or self.font is None:
+            return
+        if hasattr(self, '_start_bg_surface') and self._start_bg_surface:
+            self.screen.blit(self._start_bg_surface, (0, 0))
+        else:
+            self.screen.fill((34, 85, 96))
+        title = self.font.render("战绩记录", True, (255, 255, 255))
+        self.screen.blit(title, (WINDOW_WIDTH - 300, 80))
+        records = self.record_system.scores[-10:] if hasattr(self.record_system, 'scores') else []
+        for i, score in enumerate(records):
+            text = self.font.render(f"{i+1}. 分数: {score}", True, (255, 255, 255))
+            self.screen.blit(text, (WINDOW_WIDTH - 300, 140 + i * 40))
+        btn_w, btn_h = 120, 40
+        btn_color = (34, 85, 96)
+        btn_hover = (110, 193, 228)
+        font_color = (255, 255, 255)
+        margin = 30
+        x = WINDOW_WIDTH - btn_w - margin
+        y = WINDOW_HEIGHT - btn_h - margin
+        mx, my = pygame.mouse.get_pos()
+        back_rect = pygame.Rect(x, y, btn_w, btn_h)
+        color = btn_hover if back_rect.collidepoint(mx, my) else btn_color
+        pygame.draw.rect(self.screen, color, back_rect, border_radius=8)
+        back_text = self.font.render("返回", True, font_color)
+        text_rect = back_text.get_rect(center=back_rect.center)
+        self.screen.blit(back_text, text_rect)
+        self.record_back_rect = back_rect
+        pygame.display.flip()
+
     def handle_events(self):
         import pygame
         for event in pygame.event.get():
@@ -178,14 +293,37 @@ class Game:
                             self.state = "playing"
                             self.init_level()
                         elif self.menu_btn_rects[1].collidepoint(mx, my):
-                            # 选择关卡逻辑
-                            pass
+                            self.state = "level_select"
                         elif self.menu_btn_rects[2].collidepoint(mx, my):
-                            # 选择皮肤逻辑
-                            pass
+                            self.state = "skin_select"
                         elif self.menu_btn_rects[3].collidepoint(mx, my):
-                            # 战绩记录逻辑
-                            pass
+                            self.state = "record"
+            elif self.state == "level_select":
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mx, my = event.pos
+                    for i, rect in enumerate(self.level_btn_rects):
+                        if rect.collidepoint(mx, my):
+                            self.current_level = i + 1
+                            self.state = "playing"
+                            self.init_level()
+                            return
+                    if self.level_back_rect.collidepoint(mx, my):
+                        self.state = "start_menu"
+            elif self.state == "skin_select":
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mx, my = event.pos
+                    for i, rect in enumerate(self.skin_btn_rects):
+                        if rect.collidepoint(mx, my):
+                            self.selected_skin = f"皮肤{i+1}"
+                            self.state = "start_menu"
+                            return
+                    if self.skin_back_rect.collidepoint(mx, my):
+                        self.state = "start_menu"
+            elif self.state == "record":
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mx, my = event.pos
+                    if hasattr(self, 'record_back_rect') and self.record_back_rect.collidepoint(mx, my):
+                        self.state = "start_menu"
             elif self.state == "playing":
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
@@ -204,18 +342,15 @@ class Game:
                 elif event.type == pygame.MOUSEBUTTONDOWN and self.game_over:
                     mx, my = event.pos
                     if hasattr(self, 'button_restart_rect') and self.button_restart_rect.collidepoint(mx, my):
-                        self.running = False
-                        self.restart_game()
-                        self.running = True
-                        self.game_loop()
+                        self.state = "start_menu"
+                        self.game_over = False
+                        self.win = False
                     elif hasattr(self, 'button_quit_rect') and self.button_quit_rect.collidepoint(mx, my):
                         self.running = False
                         import pygame
                         pygame.quit()
                         import sys
                         sys.exit()
-            elif event.type == pygame.QUIT:
-                self.running = False
     
     def update_game(self):
         """更新游戏逻辑"""
