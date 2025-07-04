@@ -485,7 +485,21 @@ class Game:
         self.screen.blit(target_text, (10, 90))
         
         # 显示食物计数
-        food_count_text = self.font.render(f"食物: {self.food_system.food_count}", True, WHITE)
+        food_type_map = {
+            "green_fruit": "青蛇果",
+            "lotus_fruit": "莲花果",
+            "ganoderma": "灵芝果",
+            "herb": "仙草果",
+            "water_fruit": "水灵果",
+            "magic_fruit": "法力果",
+            "vine_fruit": "青藤果",
+            "illusion_fruit": "幻境果",
+            "lightning_fruit": "雷电果",
+            "bead_fruit": "佛珠果"
+        }
+        food_type = getattr(self.food_system, 'food_type', 'green_fruit')
+        food_name = food_type_map.get(food_type, "食物")
+        food_count_text = self.font.render(f"{food_name}: {self.food_system.food_count}", True, WHITE)
         self.screen.blit(food_count_text, (10, 130))
         
         # 暂停状态
