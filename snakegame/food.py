@@ -22,6 +22,7 @@ class FoodSystem:
         # 食物属性
         self.food_position = (0, 0)
         self.food_type = "green_fruit"  # 默认食物类型
+        self.FOOD_SIZE = int(GRID_SIZE * 2.5)  # 食物图片放大为2.5倍
         self.images = self._load_images()
         self.current_food_image = self.images[self.food_type]
         self.radius = GRID_SIZE // 3
@@ -67,38 +68,37 @@ class FoodSystem:
                 img_path = f"assets/food/{food_type}.png"
                 if os.path.exists(img_path):
                     img = pygame.image.load(img_path).convert_alpha()
-                    images[food_type] = pygame.transform.scale(img, (GRID_SIZE, GRID_SIZE))
+                    images[food_type] = pygame.transform.scale(img, (self.FOOD_SIZE, self.FOOD_SIZE))
                 else:
-                    surf = pygame.Surface((GRID_SIZE, GRID_SIZE), pygame.SRCALPHA)
-                    pygame.draw.circle(surf, color + (255,), (GRID_SIZE//2, GRID_SIZE//2), GRID_SIZE//2-2)
+                    surf = pygame.Surface((self.FOOD_SIZE, self.FOOD_SIZE), pygame.SRCALPHA)
+                    pygame.draw.circle(surf, color + (255,), (self.FOOD_SIZE//2, self.FOOD_SIZE//2), self.FOOD_SIZE//2-2)
                     images[food_type] = surf
         except Exception as e:
             print(f"图片加载失败: {str(e)}")
             # 创建默认食物图像
             for food_type, color in level_food_types.items():
-                surf = pygame.Surface((GRID_SIZE, GRID_SIZE), pygame.SRCALPHA)
-                pygame.draw.circle(surf, color, (GRID_SIZE//2, GRID_SIZE//2), GRID_SIZE//2-2)
+                surf = pygame.Surface((self.FOOD_SIZE, self.FOOD_SIZE), pygame.SRCALPHA)
+                pygame.draw.circle(surf, color, (self.FOOD_SIZE//2, self.FOOD_SIZE//2), self.FOOD_SIZE//2-2)
                 images[food_type] = surf
         return images
     
-    def randomize_food_position(self, snake_positions=None):
-        """安全地随机生成食物位置"""
+    def randomize_food_position(self, snake_positions=None, exclude_positions=None):
+        """安全地随机生成食物位置，支持排除额外坐标（如BOSS）"""
         max_attempts = 100
         for _ in range(max_attempts):
             self.food_position = (
                 random.randint(0, GRID_WIDTH - 1),
                 random.randint(0, GRID_HEIGHT - 1)
             )
-            # 如果提供了蛇的位置，确保食物不在蛇身上
-            if snake_positions is None or self.food_position not in snake_positions:
+            # 如果提供了蛇的位置，确保食物不在蛇身上，也不在排除列表
+            if (snake_positions is None or self.food_position not in snake_positions) and \
+               (exclude_positions is None or self.food_position not in exclude_positions):
                 break
-        
         # 根据当前关卡设置食物类型
         if self.current_level in self.level_targets:
             self.food_type = self.level_targets[self.current_level]["food_type"]
         else:
             self.food_type = "green_fruit"  # 默认
-        
         self.current_food_image = self.images[self.food_type]
     
     def check_food_collision(self, snake_head):

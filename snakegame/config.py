@@ -42,7 +42,7 @@ FOOD_TYPES = {
 }
 
 # 游戏速度
-FPS = 5
+FPS = 10
 
 # 关卡设置
 MAX_LEVEL = 10

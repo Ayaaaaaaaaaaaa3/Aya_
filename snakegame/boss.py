@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+import os
 
 class Boss:
     MOVE_INTERVAL = 20  # 移动间隔帧数
@@ -8,7 +9,9 @@ class Boss:
 
     def __init__(self, x, y, size, image_path=None, **kwargs):
         self.x, self.y, self.size = x, y, size
-        self.image = pygame.transform.scale(pygame.image.load(image_path), (size, size)) if image_path else None
+        self.boss_scale = 5.0  # BOSS图片放大5倍
+        self.image = self._load_boss_image(image_path)
+        self.ball_image = self._load_ball_image()  # 加载法球图片
         self.alive = True
         self.move_counter = 0
         self.mode = "normal"  # normal, final
@@ -17,6 +20,28 @@ class Boss:
         self.weak = False  # 虚弱状态
         self.circle_count = 0  # 蛇绕圈计数
         self.last_snake_angle = None
+
+    def _load_boss_image(self, image_path):
+        # 优先用传入路径，否则用默认boss图片
+        target_size = int(self.size * self.boss_scale)
+        if image_path and os.path.exists(image_path):
+            print(f"加载自定义boss图片: {image_path}")
+            return pygame.transform.scale(pygame.image.load(image_path), (target_size, target_size))
+        default_path = "assets/obstacles/boss4.png"
+        if os.path.exists(default_path):
+            print(f"加载默认boss图片: {default_path}")
+            return pygame.transform.scale(pygame.image.load(default_path), (target_size, target_size))
+        print("未找到boss图片")
+        return None
+
+    def _load_ball_image(self):
+        # 加载法球图片
+        ball_path = "assets/obstacles/ball.png"
+        if os.path.exists(ball_path):
+            print(f"加载法球图片: {ball_path}")
+            return pygame.transform.scale(pygame.image.load(ball_path), (self.size * 3, self.size * 3))  # 从1倍改为3倍
+        print("未找到法球图片，使用默认圆形")
+        return None
 
     def set_mode(self, mode):
         self.mode = mode
@@ -88,9 +113,7 @@ class Boss:
 
     def draw(self, surface):
         if self.image:
-            #surface.blit(self.image, (self.x * self.size, self.y * self.size))
-            # 图片显示时加红色矩形边框
-            pygame.draw.rect(surface, (255, 0, 0), (self.x * self.size, self.y * self.size, self.size, self.size), 2)
+            surface.blit(self.image, (self.x * self.size, self.y * self.size))
         else:
             # 图片未加载时，画一个红色十字作为定位标志
             center_x = self.x * self.size + self.size // 2
@@ -101,4 +124,8 @@ class Boss:
         # 绘制法球
         for ball in self.balls:
             bx, by = ball["pos"]
-            pygame.draw.circle(surface, (0, 0, 255), (int(bx * self.size + self.size // 2), int(by * self.size + self.size // 2)), self.size // 3)
+            if self.ball_image:
+                surface.blit(self.ball_image, (int(bx * self.size + self.size // 2 - self.ball_image.get_width() // 2),
+                                              int(by * self.size + self.size // 2 - self.ball_image.get_height() // 2)))
+            else:
+                pygame.draw.circle(surface, (0, 0, 255), (int(bx * self.size + self.size // 2), int(by * self.size + self.size // 2)), self.size)  # 从1/3改为1倍

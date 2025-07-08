@@ -5,10 +5,12 @@ class Snake:
         self.body = [(10, 10), (9, 10), (8, 10)]
         self.direction = (1, 0)
         self.grow = False
-        self.speed = 1 # 初始速度
+        self.speed = 1.0 # 初始速度，允许float
         self.special_effects = {}  # 特殊效果字典
+        self.slow_timer = 0  # 水域减速计时器
 
     def move(self):
+        # 按speed控制移动距离（主循环需支持小于1的速度）
         head = (self.body[0][0] + self.direction[0], self.body[0][1] + self.direction[1])
         self.body.insert(0, head)
         if not self.grow:
@@ -24,17 +26,27 @@ class Snake:
     def eat(self):
         self.grow = True
 
-    def check_collision(self, width, height, obstacles):
+    def check_collision(self, grid_width, grid_height, obstacle_positions, obstacle_types=None):
         head = self.body[0]
         # 撞墙
-        if head[0] < 0 or head[0] >= width or head[1] < 0 or head[1] >= height:
+        if not (0 <= head[0] < grid_width and 0 <= head[1] < grid_height):
             return True
         # 撞自己
         if head in self.body[1:]:
             return True
         # 撞障碍物
-        if head in obstacles:
-            return True
+        if obstacle_types is None:
+            if head in obstacle_positions:
+                return True
+        else:
+            for pos, typ in zip(obstacle_positions, obstacle_types):
+                # 桥墩图片判定范围更大
+                if typ == 'bridge_pier':
+                    if abs(head[0] - pos[0]) < 1 and abs(head[1] - pos[1]) < 1:
+                        return True
+                # 其它障碍物精确判定
+                elif head == pos:
+                    return True
         return False
 
     def render(self, surface, cell_size):
@@ -69,4 +81,5 @@ class Snake:
         self.body = [(10, 10), (9, 10), (8, 10)]
         self.direction = (1, 0)
         self.grow = False
-        self.speed = 1
+        self.speed = 1.0
+        self.slow_timer = 0
